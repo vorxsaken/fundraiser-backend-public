@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id         Int         @id @default(autoincrement())
+  nama       String      @db.VarChar(50)
+  password   String      @db.VarChar(255)
+  nis        String?      @db.VarChar(150)
+  kelas      String?      @db.VarChar(30)
+  tingkat    String?      @db.VarChar(30)
+  angkatan   String?      @db.VarChar(30)
+  alamat     String      @db.VarChar(255)
+  no_telp    String      @db.VarChar(50)
+  email      String      @db.VarChar(50)
+  foto       String?     @db.VarChar(255)
+  role       Role        @default(SISWA)
+  Tagihan    Tagihan[]
+}
+
+model Tagihan {
+  id            Int              @id @default(autoincrement())
+  judul_tagihan String           @db.VarChar(150)
+  total_tagihan Int
+  tenggat_waktu DateTime
+  userId        Int
+  sisa_tagihan  Int?   
+  status        StatusPembayaran @default(BELUM_LUNAS)
+  User          User             @relation(fields: [userId], references: [id])
+  Pembayaran    Pembayaran[]
+  Draft         DraftTagihan[]
+}
+
+model Pembayaran {
+  id                      Int      @id @default(autoincrement())   
+  tagihanId               Int?
+  total                   Int
+  tanggal_bayar           DateTime @default(now()) @db.Timestamp(6)
+  // midtrans create charge fields
+  status_code             String?
+  status_message          String?
+  transaction_id          String?
+  order_id                String?
+  merchant_id             String?
+  gross_amount            String?
+  currency                String?
+  payment_type            String?
+  transaction_time        String?
+  transaction_status      String?
+  bank                    String?
+  fraud_status            String?
+  Tagihan                 Tagihan?  @relation(fields: [tagihanId], references: [id])
+}
+
+model DraftTagihan {
+  id                      Int      @id  @default(autoincrement())
+  id_tagihan              Int
+  nominal                 Int
+  metode_pembayaran       String   @db.VarChar(30)
+  principal               String   @db.VarChar(30)
+  virtual_number          String   @db.VarChar(100)
+  kondisi                 Int?      
+  Tagihan                 Tagihan  @relation(fields: [id_tagihan], references: [id])
+}
+
+enum StatusPembayaran {
+  BELUM_LUNAS
+  LUNAS
+}
+
+enum Role {
+  SISWA
+  ADMIN
+}
